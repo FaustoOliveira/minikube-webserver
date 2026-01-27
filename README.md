@@ -357,7 +357,7 @@ minikube ip
 ```
 Browser:
 
-```
+```bash
 https://<MINIKUBE-IP>:30443
 ```
 
@@ -365,7 +365,8 @@ https://<MINIKUBE-IP>:30443
 
 löscht:
 
-```minikube delete
+```bash
+minikube delete
 ``` 
 
 -  alle Pods
@@ -386,8 +387,9 @@ Kubernetes-Zustand ist nur leer
 
 Am Ende erreichst du wieder:
 
+```bash
 https://<minikube-ip>:30443
-
+```
 ---------------------------------------------------------------------------------------------
 
 SCHRITT-FÜR-SCHRITT WIEDERHERSTELLUNG
