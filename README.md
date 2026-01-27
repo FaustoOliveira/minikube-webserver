@@ -463,12 +463,12 @@ kubectl get svc
 ```
 
 Erwartet:
-
+```bash
 webserver   1/1 Running (2x)
 haproxy     1/1 Running
 
 haproxy   NodePort   443:30443/TCP
-
+```
 ----------------------------------------------------------------------------------------------
 
 # 6 Zugriff im Browser
