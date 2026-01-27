@@ -31,7 +31,7 @@ Sie sind in .gitignore ausgeschlossen und werden nur lokal für Minikube verwend
 
 # Gesamtidee
 
-```
+```css
 Browser (https)
    ↓
 Load Balancer (NGINX, Round-Robin + Healthcheck)
@@ -114,12 +114,15 @@ minikube start --driver=docker
 # Schritt 3 – HTML Repository erstellen
 
 Erstelle ein separates öffentliches Git-Repo, z. B.:
+
 ```
 simple-webpage/
-└── index.html ```
+└── index.html 
+```
 
 index.html
 
+```html
 <!DOCTYPE html>
 <html>
 <head>
@@ -130,13 +133,14 @@ index.html
     <p>Antwort von Container: <strong>{{CONTAINER_ID}}</strong></p>
 </body>
 </html>
-
+```
 Repo-URL merken (z. B. https://github.com/deinname/simple-webpage.git)
 
+---------------------------------------------------------------------------------------------
 
 # Schritt 4 app/Dockerfile erstellen – Webserver Docker-Image  
 
-
+```
 FROM nginx:alpine
 
 RUN apk add --no-cache git bash
@@ -152,10 +156,13 @@ HEALTHCHECK --interval=10s --timeout=2s \
 
 ENTRYPOINT ["/entrypoint.sh"]
 
+```
+
 ----------------------------------------------------------------------
 
 # app/entrypoint.sh erstellen 
 
+```bash
 #!/bin/sh
 
 
@@ -179,11 +186,13 @@ CONTAINER_ID=$(hostname)
 sed -i "s/{{CONTAINER_ID}}/$CONTAINER_ID/g" /usr/share/nginx/html/index.html
 
 nginx -g "daemon off;"
+```
 
 ---------------------------------------------------------------------------------
 
 # app/nginx.conf erstellen 
 
+```nginx
 events {}
 
 http {
@@ -203,7 +212,7 @@ http {
         }
     }
 }
-
+```
 -------------------------------------------------------------------------------------
 
 # Schritt 5 – HAProxy Load-Balancer (HTTPS)
@@ -215,7 +224,7 @@ cat cert.pem key.pem > cert.pem
 
 -------------------------------------------------------------------------------------
 #  haproxy/haproxy.cfg erstellen 
-
+```
 global
     log stdout format raw local0
     maxconn 256
@@ -239,13 +248,11 @@ backend web_back
     balance roundrobin
     option httpchk GET /health
     server-template web 2 webserver-headless.default.svc.cluster.local:80 check
-
---------------------------------------------------------------------------------------
-
+```
 -------------------------------------------------------------------------------------
 
 # Schritt 6 k8s/web-deployment.yaml  erstellen – Kubernetes Deployment (2 Instanzen)
-
+```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -270,11 +277,12 @@ spec:
               # Git-Repo für Web-Inhalt
           ports:
             - containerPort: 80     # HTTP-Port des Webservers
-
+```
 ------------------------------------------------------------------------------------------
 
 # k8s/web-headless-service.yaml 
 
+```yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -286,11 +294,13 @@ spec:
   ports:
     - port: 80             
       targetPort: 80      
+```
 
 -------------------------------------------------------------------------------------------
 
 # haproxy-deployment.yaml
 
+```yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -311,11 +321,11 @@ spec:
           imagePullPolicy: Never  
           ports:
             - containerPort: 8443 
-
+```
 ----------------------------------------------------------------------------------------------
 
 # haproxy-service.yaml
-
+```yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -329,22 +339,22 @@ spec:
       port: 443           
       targetPort: 443    
       nodePort: 30443    
-
+```
 --------------------------------------------------------------------------------------------
 
 # Schritt 7 – Build & Start
-
+```bash
 eval $(minikube docker-env)
 docker build -t webserver ./app
 kubectl apply -f k8s/
-
+```
 ---------------------------------------------------------------------------------------------
 
 Zugriff:
 
-
+```
 minikube ip
-
+```
 Browser:
 
 https://<MINIKUBE-IP>:30443
@@ -354,7 +364,10 @@ https://<MINIKUBE-IP>:30443
 
 
 
-`minikube delete` löscht:
+```minikube delete
+``` 
+
+löscht:
 
 -  alle Pods
     
@@ -382,18 +395,21 @@ SCHRITT-FÜR-SCHRITT WIEDERHERSTELLUNG
 
 # 1  Minikube starten
 
-minikube start
+```minikube start
+```
 
 Prüfen:
 
-kubectl get pods
+```kubectl get pods
+```
 # → No resources found (OK!)
 
 ---------------------------------------------------------------------------------------------
 
 # 2 Docker auf Minikube umstellen (SEHR WICHTIG)
 
-eval $(minikube docker-env)
+```eval $(minikube docker-env)
+```
 
 ---------------------------------------------------------------------------------------------
 
@@ -401,16 +417,19 @@ eval $(minikube docker-env)
 
 Webserver
 
-docker build -t webserver ./app
+```docker build -t webserver ./app
+```
 
 HAProxy
 
-docker build -t haproxy-lb ./haproxy
+```docker build -t haproxy-lb ./haproxy
+```
 
 
 Prüfen:
 
-docker images | grep -E "webserver|haproxy"
+```docker images | grep -E "webserver|haproxy"
+```
 
 ---------------------------------------------------------------------------------------------
 
@@ -418,7 +437,8 @@ docker images | grep -E "webserver|haproxy"
 
 Einfach **alles auf einmal**:
 
-kubectl apply -f k8s/
+```kubectl apply -f k8s/
+```
 
 Du solltest sehen:
 
@@ -431,8 +451,10 @@ service/haproxy created
 
 # 5 Status prüfen
 
+```bash
 kubectl get pods
 kubectl get svc
+```
 
 Erwartet:
 
@@ -445,7 +467,8 @@ haproxy   NodePort   443:30443/TCP
 
 # 6 Zugriff im Browser
 
-minikube ip
+```minikube ip
+```
 
 Dann: 
 
@@ -457,4 +480,6 @@ Zertifikatswarnung → **Erweitert → Trotzdem fortfahren**
 
 # 7 Funktionstest (optional, aber gut)
 
-kubectl delete pod -l app=web
+```kubectl delete pod -l app=web
+```
+
