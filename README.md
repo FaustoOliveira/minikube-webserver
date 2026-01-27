@@ -31,7 +31,7 @@ Sie sind in .gitignore ausgeschlossen und werden nur lokal für Minikube verwend
 
 # Gesamtidee
 
-
+```
 Browser (https)
    ↓
 Load Balancer (NGINX, Round-Robin + Healthcheck)
@@ -39,7 +39,7 @@ Load Balancer (NGINX, Round-Robin + Healthcheck)
 Container 1  ----> Webserver (HTML aus Git-Repo)
    ↓
 Container 2  ----> Webserver (HTML aus Git-Repo)
-
+```
 
 
 Minikube: Lokales Kubernetes 
@@ -100,21 +100,23 @@ https://kubernetes.io/docs/tasks/tools/
 
 
 # Testen
-
+``
 docker --version
 minikube version
-kubectl version --client
+kubectl version --client``
 
 # Schritt 2 – Minikube starten
 
+```bash
 minikube start --driver=docker
+```
 
 # Schritt 3 – HTML Repository erstellen
 
 Erstelle ein separates öffentliches Git-Repo, z. B.:
-
+```
 simple-webpage/
-└── index.html
+└── index.html ```
 
 index.html
 
