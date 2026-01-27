@@ -352,22 +352,21 @@ kubectl apply -f k8s/
 
 Zugriff:
 
-```
+```bash
 minikube ip
 ```
 Browser:
 
+```
 https://<MINIKUBE-IP>:30443
-
+```
 
 ------------------------------------------------------------------------------------------
 
-
+löscht:
 
 ```minikube delete
 ``` 
-
-löscht:
 
 -  alle Pods
     
@@ -395,12 +394,14 @@ SCHRITT-FÜR-SCHRITT WIEDERHERSTELLUNG
 
 # 1  Minikube starten
 
-```minikube start
+```bash 
+minikube start
 ```
 
 Prüfen:
 
-```kubectl get pods
+```bash
+kubectl get pods
 ```
 # → No resources found (OK!)
 
@@ -408,7 +409,8 @@ Prüfen:
 
 # 2 Docker auf Minikube umstellen (SEHR WICHTIG)
 
-```eval $(minikube docker-env)
+```bash
+eval $(minikube docker-env)
 ```
 
 ---------------------------------------------------------------------------------------------
@@ -417,18 +419,21 @@ Prüfen:
 
 Webserver
 
-```docker build -t webserver ./app
+```bash
+docker build -t webserver ./app
 ```
 
 HAProxy
 
-```docker build -t haproxy-lb ./haproxy
+```bash
+docker build -t haproxy-lb ./haproxy
 ```
 
 
 Prüfen:
 
-```docker images | grep -E "webserver|haproxy"
+```bash
+docker images | grep -E "webserver|haproxy"
 ```
 
 ---------------------------------------------------------------------------------------------
@@ -437,16 +442,17 @@ Prüfen:
 
 Einfach **alles auf einmal**:
 
-```kubectl apply -f k8s/
+```bash
+kubectl apply -f k8s/
 ```
 
 Du solltest sehen:
-
+```bash
 deployment.apps/webserver created
 deployment.apps/haproxy created
 service/webserver-headless created
 service/haproxy created
-
+```
 -----------------------------------------------------------------------------------------------
 
 # 5 Status prüfen
@@ -467,19 +473,21 @@ haproxy   NodePort   443:30443/TCP
 
 # 6 Zugriff im Browser
 
-```minikube ip
+```bash
+minikube ip
 ```
 
 Dann: 
-
+```css
 https://<MINIKUBE-IP>:30443
-
+```
 Zertifikatswarnung → **Erweitert → Trotzdem fortfahren**
 
 -----------------------------------------------------------------------------------------------
 
 # 7 Funktionstest (optional, aber gut)
 
-```kubectl delete pod -l app=web
+```bash
+kubectl delete pod -l app=web
 ```
 
