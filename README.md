@@ -403,7 +403,8 @@ Prüfen:
 ```bash
 kubectl get pods
 ```
-# → No resources found (OK!)
+```No resources found (OK!)
+```
 
 ---------------------------------------------------------------------------------------------
 
