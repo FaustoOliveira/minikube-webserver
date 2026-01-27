@@ -3,9 +3,9 @@ kind: Service
 metadata:
   name: webserver-headless
 spec:
-  clusterIP: None
+  clusterIP: None          # Headless Service (kein Cluster-IP)
   selector:
-    app: web
+    app: web               # Wählt Webserver-Pods aus
   ports:
-    - port: 80
-      targetPort: 80
+    - port: 80             # Service-Port
+      targetPort: 80       # Container-Port

@@ -3,11 +3,12 @@ kind: Service
 metadata:
   name: haproxy
 spec:
-  type: NodePort
+  type: NodePort          # Service über Node-IP erreichbar
   selector:
-    app: haproxy
+    app: haproxy          # Wählt HAProxy-Pods aus
   ports:
     - name: https
-      port: 443
-      targetPort: 443
-      nodePort: 30443
+      port: 443           # Service-Port (Cluster-intern)
+      targetPort: 443     # Port im Container
+      nodePort: 30443     # Externer NodePort
+

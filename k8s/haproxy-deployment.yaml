@@ -3,18 +3,19 @@ kind: Deployment
 metadata:
   name: haproxy
 spec:
-  replicas: 1
+  replicas: 1               # Anzahl der Pods
   selector:
     matchLabels:
       app: haproxy
   template:
     metadata:
       labels:
-        app: haproxy
+        app: haproxy        # Label für Selector & Service
     spec:
       containers:
         - name: haproxy
           image: haproxy-lb:latest
-          imagePullPolicy: Never
+          imagePullPolicy: Never   # Nutzt lokales Image
           ports:
-            - containerPort: 8443
+            - containerPort: 8443  # HTTPS Port (HAProxy)
+

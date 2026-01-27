@@ -3,21 +3,23 @@ kind: Deployment
 metadata:
   name: webserver
 spec:
-  replicas: 2
+  replicas: 2                 # Anzahl Webserver-Pods
   selector:
     matchLabels:
       app: web
   template:
     metadata:
       labels:
-        app: web
+        app: web               # Label für Service / HAProxy
     spec:
       containers:
         - name: web
           image: webserver:latest
-          imagePullPolicy: Never
+          imagePullPolicy: Never   # Lokales Image (Minikube)
           env:
             - name: WEB_REPO_URL
               value: "https://github.com/FaustoOliveira/minikube-webpage.git"
+              # Git-Repo für Web-Inhalt
           ports:
-            - containerPort: 80
+            - containerPort: 80     # HTTP-Port des Webservers
+
