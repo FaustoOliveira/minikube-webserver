@@ -1,0 +1,14 @@
+# TLS / Certificates
+haproxy/certs/*.pem
+
+# Docker
+*.log
+
+# Kubernetes
+*.tmp
+
+# Zertifikate (self-signed, lokal)
+haproxy/certs/key.pem
+
+# OS
+.DS_Store
