@@ -59,6 +59,7 @@ Sicherheit: non-root, minimal Image, ReadOnly FS
 
 # Projektstruktur – minikube-webserver
 
+```
 minikube-webserver/
 ├── app/
 │   ├── Dockerfile              # Webserver Image (nginx, non-root, minimal)
@@ -80,6 +81,7 @@ minikube-webserver/
 │
 ├── .gitignore
 └── README.md                   # Projektbeschreibung & Anleitung
+```
 
 
 
