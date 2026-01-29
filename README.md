@@ -241,26 +241,25 @@ kubectl apply -f k8s/
 
 # Sicherheitsaspekte
 
-- Minimal Alpine Base Image
-- Fail-fast Startskript
-- Healthchecks aktiv
-- Keine Secrets im Repository
-- Self-signed Zertifikate lokal
-- Trennung von Load Balancer und Webserver
+- Minimales Container-Image reduziert Angriffsfläche
+- Fail-fast Startlogik verhindert instabile Zustände
+- Healthchecks überwachen Containerzustand
+- Keine Secrets im Repository gespeichert
+- TLS-Zertifikate bleiben lokal
+- Klare Trennung zwischen Webserver und Load Balancer
 
 -------------------------------------------------------------------------------------------------------------------------
 
 # Ziel
 
-Demonstration von:
+Dieses Projekt demonstriert:
 
-- Kubernetes Deployments
-- Headless Services
-- Externer Load Balancer
-- HTTPS Termination
-- Health Monitoring
-- Automatischem Failover
-- Git-basiertem Content
+- Kubernetes zur Verwaltung mehrerer Webserver
+- Externes Load Balancing
+- HTTPS Absicherung
+- Healthchecks zur Stabilitätsüberwachung
+- Automatisches Failover bei Container-Ausfall
+- Dynamische Inhalte aus einem Git-Repository
 
 -------------------------------------------------------------------------------------------------------------------------
 
