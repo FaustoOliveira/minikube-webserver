@@ -1,14 +1,17 @@
-# TLS / Certificates
-haproxy/certs/*.pem
+# TLS / Certificates (lokal erzeugt)
+haproxy/certs/*
+!haproxy/certs/.gitkeep
 
-# Docker
+# Logs & temporäre Dateien
 *.log
-
-# Kubernetes
 *.tmp
+*.swp
+*.bak
 
-# Zertifikate (self-signed, lokal)
-haproxy/certs/key.pem
+# Docker / lokale Builds
+.env
+node_modules
 
 # OS
 .DS_Store
+Thumbs.db
