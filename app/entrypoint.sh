@@ -26,4 +26,16 @@ sed -i "s/{{CONTAINER_ID}}/$CONTAINER_ID/g" /usr/share/nginx/html/index.html
 nginx -g "daemon off;"
 
 
-
+# --------------------------------------------------
+# entrypoint.sh
+#
+# Dieses Script:
+# - lädt Webseiteninhalt aus einem Git-Repository
+# - validiert die Dateien
+# - ersetzt Container-ID im HTML
+# - startet NGINX
+# - bricht bei Fehlern sofort ab
+#
+# Ziel:
+# Dynamische Inhalte + sichere Startlogik
+# --------------------------------------------------

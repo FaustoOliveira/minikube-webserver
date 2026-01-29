@@ -35,20 +35,22 @@ TLS-Zertifikate werden **lokal erzeugt** und sind **nicht Bestandteil des Git-Re
 # Gesamtidee
 
 ```css
-Browser (https)
+Browser (HTTPS)
    ↓
-HAProxy Load Balancer (Round-Robin + Healthcheck)
+NodePort Service (30443)
    ↓
-Webserver Pod 1 → HTML aus Git-Repo
+HAProxy Pod (TLS Termination + LB)
    ↓
-Webserver Pod 2 → HTML aus Git-Repo
+Headless Service (DNS Discovery)
+   ↓
+Webserver Pods (Git Content)
 ```
 
 Minikube: lokales Kubernetes  
 Docker-Image: Webserver + Git Clone Logik  
 ENV Variable: Git-Repo URL  
 Healthchecks: Container + HAProxy  
-Load Balancer: außerhalb von Kubernetes Services  
+Load Balancer: als Kubernetes Pod mit NodePort Service
 HTTPS: self-signed Zertifikat
 
 -------------------------------------------------------------------------------------------------------------------------
@@ -255,11 +257,31 @@ kubectl apply -f k8s/
 Dieses Projekt demonstriert:
 
 - Kubernetes zur Verwaltung mehrerer Webserver
-- Externes Load Balancing
+- Ingress-ähnlicher Load Balancer Pod
 - HTTPS Absicherung
 - Healthchecks zur Stabilitätsüberwachung
 - Automatisches Failover bei Container-Ausfall
 - Dynamische Inhalte aus einem Git-Repository
+
+-------------------------------------------------------------------------------------------------------------------------
+
+
+
+# Troubleshooting
+
+ErrImageNeverPull
+→ Docker images im Minikube bauen:
+
+eval $(minikube docker-env)
+
+Pods stuck in CrashLoopBackOff
+→ Logs prüfen:
+
+kubectl logs <pod>
+
+Cluster reset:
+
+minikube delete
 
 -------------------------------------------------------------------------------------------------------------------------
 
