@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: haproxy
-          image: haproxy-lb:latest
+          image: haproxy-lb:v7
           imagePullPolicy: Never   # Nutzt lokales Image
           ports:
             - containerPort: 8443  # HTTPS Port (HAProxy)
