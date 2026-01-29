@@ -2,24 +2,59 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: webserver
+
 spec:
-  replicas: 2                 # Anzahl Webserver-Pods
+  replicas: 2 # Anzahl Webserver-Pods (Load Balancing sichtbar)
+
   selector:
     matchLabels:
       app: web
+
   template:
     metadata:
       labels:
-        app: web               # Label für Service / HAProxy
+        app: web # Label wird vom Headless Service + HAProxy genutzt
+
     spec:
       containers:
         - name: web
           image: webserver:latest
-          imagePullPolicy: Never   # Lokales Image (Minikube)
+          imagePullPolicy: Never # Nutzt lokales Minikube Docker Image
+
           env:
             - name: WEB_REPO_URL
               value: "https://github.com/FaustoOliveira/minikube-webpage.git"
-              # Git-Repo für Web-Inhalt
-          ports:
-            - containerPort: 80     # HTTP-Port des Webservers
+              # Repository wird beim Containerstart automatisch geklont
 
+          ports:
+            - containerPort: 80 # HTTP-Port vom nginx Webserver
+
+          # --- Kubernetes Health Checks ---
+          # Kubernetes prüft ob der Container lebt
+          # Bei Fehler wird Pod neu gestartet
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 5
+            periodSeconds: 10
+
+          # Kubernetes prüft ob Container bereit für Traffic ist
+          # Nur "ready" Pods bekommen Requests vom Load Balancer
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 5
+
+          # --- Resource Limits ---
+          # Schutz vor CPU / RAM Überlastung
+          # Simuliert Produktionsumgebung
+          resources:
+            limits:
+              cpu: "100m"
+              memory: "128Mi"
+            requests:
+              cpu: "50m"
+              memory: "64Mi"

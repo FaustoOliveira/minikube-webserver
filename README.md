@@ -28,7 +28,7 @@ TLS-Zertifikate werden **lokal erzeugt** und sind **nicht Bestandteil des Git-Re
 | **HAProxy**  | Load Balancer mit Healthchecks           |
 | **Git**      | Dynamischer Webseiteninhalt              |
 | **OpenSSL**  | Self-signed HTTPS                        |
-| **Bash**     | Container Startlogik                     |
+| **Bash**     | Automatisierung                          |
 
 -------------------------------------------------------------------------------------------------------------------------
 
@@ -140,7 +140,7 @@ openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365 -node
 cat cert.pem key.pem > fullchain.pem
 ```
 
-Zertifikate bleiben lokal.
+Zertifikatswarnung ist normal (self-signed)
 
 -------------------------------------------------------------------------------------------------------------------------
 

@@ -9,6 +9,6 @@ spec:
   ports:
     - name: https
       port: 443           # Service-Port (Cluster-intern)
-      targetPort: 443     # Port im Container
+      targetPort: 8443     # Port im Container
       nodePort: 30443     # Externer NodePort
 
