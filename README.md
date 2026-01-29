@@ -272,16 +272,22 @@ Dieses Projekt demonstriert:
 ErrImageNeverPull
 → Docker images im Minikube bauen:
 
+```bash
 eval $(minikube docker-env)
+```
 
 Pods stuck in CrashLoopBackOff
 → Logs prüfen:
 
+```bash
 kubectl logs <pod>
+```
 
 Cluster reset:
 
+```bash
 minikube delete
+```
 
 -------------------------------------------------------------------------------------------------------------------------
 
