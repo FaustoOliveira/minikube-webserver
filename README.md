@@ -1,109 +1,104 @@
 # minikube-webserver
 
+Dieses Projekt demonstriert eine vollständige lokale Kubernetes-Infrastruktur mit:
 
-Das Projekt besteht aus zwei Repositories:
+- dynamischem Webserver
+- externem Load Balancer
+- HTTPS
+- Healthchecks
+- Failover
+- Git-basiertem Content
 
-Das Haupt-Repository enthält die Infrastruktur (Docker, Kubernetes, HAProxy).
+Das Projekt besteht aus **zwei Repositories**:
 
-Die Webseite selbst liegt in einem separaten öffentlichen Repository und wird beim Start der Container aus diesem geladen.
+1. Infrastruktur-Repo (dieses Projekt)
+2. Öffentliches HTML-Repo (Webinhalt)
 
+Die Webseite wird beim Containerstart automatisch aus dem Git-Repo geladen.
 
-Die TLS-Zertifikate werden lokal erzeugt und sind nicht Bestandteil des Git-Repositories.
-Sie sind in .gitignore ausgeschlossen und werden nur lokal für Minikube verwendet.
+TLS-Zertifikate werden **lokal erzeugt** und sind **nicht Bestandteil des Git-Repositories**.
 
 -------------------------------------------------------------------------------------------------------------------------
-
-
-
 
 | Technologie  | Begründung                               |
 | ------------ | ---------------------------------------- |
 | **Docker**   | Standard für Container                   |
-| **Minikube** | Einfaches lokales Kubernetes             |
-| **NGINX**    | Leicht, sicher, stabil                   |
-| **HAProxy**  | Perfekter Load-Balancer ohne K8S-Service |
-| **Git**      | HTML-Seite wird dynamisch geladen        |
-| **OpenSSL**  | Self-Signed HTTPS                        |
-| **Bash**     | Automatisierung                          |
+| **Minikube** | Lokales Kubernetes für Tests             |
+| **NGINX**    | Leichtgewichtiger Webserver              |
+| **HAProxy**  | Load Balancer mit Healthchecks           |
+| **Git**      | Dynamischer Webseiteninhalt              |
+| **OpenSSL**  | Self-signed HTTPS                        |
+| **Bash**     | Container Startlogik                     |
 
-
----------------------------------------------------------------------------------------------------------------------------
+-------------------------------------------------------------------------------------------------------------------------
 
 # Gesamtidee
 
 ```css
 Browser (https)
    ↓
-Load Balancer (NGINX, Round-Robin + Healthcheck)
+HAProxy Load Balancer (Round-Robin + Healthcheck)
    ↓
-Container 1  ----> Webserver (HTML aus Git-Repo)
+Webserver Pod 1 → HTML aus Git-Repo
    ↓
-Container 2  ----> Webserver (HTML aus Git-Repo)
+Webserver Pod 2 → HTML aus Git-Repo
 ```
 
-
-Minikube: Lokales Kubernetes 
-
-Docker-Image: Webserver + Logik zum Klonen eines Git-Repos
-
-ENV Variable: Git-Repo-URL
-
-Healthchecks: Kubernetes weiß, ob Container lebt
-
-Load Balancer (NGINX): außerhalb von Kubernetes Services
-
+Minikube: lokales Kubernetes  
+Docker-Image: Webserver + Git Clone Logik  
+ENV Variable: Git-Repo URL  
+Healthchecks: Container + HAProxy  
+Load Balancer: außerhalb von Kubernetes Services  
 HTTPS: self-signed Zertifikat
 
-Sicherheit: non-root, minimal Image, ReadOnly FS
-
+-------------------------------------------------------------------------------------------------------------------------
 
 # Projektstruktur – minikube-webserver
 
 ```
 minikube-webserver/
 ├── app/
-│   ├── Dockerfile              # Webserver Image (nginx, non-root, minimal)
-│   ├── entrypoint.sh           # Startskript: cloned HTML Repo + Start nginx
-│   └── nginx.conf              # nginx Konfiguration inkl. Health Endpoint
+│   ├── Dockerfile
+│   ├── entrypoint.sh
+│   └── nginx.conf
 │
 ├── haproxy/
-│   ├── Dockerfile              # HAProxy Image mit SSL
-│   ├── haproxy.cfg             # HAProxy Config (Round-Robin + Healthchecks)
-│   └── certs/
-│       ├── cert.pem            # Self-signed Zertifikat
-│       └── key.pem             # Private Key
+│   ├── Dockerfile
+│   ├── haproxy.cfg
+│   └── certs/        # lokal erzeugt (nicht im Repo)
 │
 ├── k8s/
-│   ├── web-deployment.yaml     # Deployment für Webserver (replicas >= 2)
-│   ├── web-headless-service.yaml # Headless Service für direkte Pod-Erreichbarkeit
-│   ├── haproxy-deployment.yaml # Deployment für HAProxy
-│   └── haproxy-service.yaml    # Service für externen Zugriff (NodePort)
+│   ├── web-deployment.yaml
+│   ├── web-headless-service.yaml
+│   ├── haproxy-deployment.yaml
+│   └── haproxy-service.yaml
 │
 ├── .gitignore
-└── README.md                   # Projektbeschreibung & Anleitung
+└── README.md
 ```
 
-
-
-
+-------------------------------------------------------------------------------------------------------------------------
 
 # Schritt 1 – Voraussetzungen installieren
 
-# Docker
+Docker  
 https://docs.docker.com/get-docker/
 
-# Minikube
+Minikube  
 https://minikube.sigs.k8s.io/docs/start/
 
-# kubectl
+kubectl  
 https://kubernetes.io/docs/tasks/tools/
 
+Test:
 
-# Testen
-``
+```
 docker --version
 minikube version
-kubectl version --client``
+kubectl version --client
+```
+
+-------------------------------------------------------------------------------------------------------------------------
 
 # Schritt 2 – Minikube starten
 
@@ -111,387 +106,163 @@ kubectl version --client``
 minikube start --driver=docker
 ```
 
+-------------------------------------------------------------------------------------------------------------------------
+
 # Schritt 3 – HTML Repository erstellen
 
-Erstelle ein separates öffentliches Git-Repo, z. B.:
+Beispiel:
 
 ```
 simple-webpage/
-└── index.html 
+└── index.html
 ```
-
-index.html
 
 ```html
 <!DOCTYPE html>
 <html>
-<head>
-    <title>Minikube Demo</title>
-</head>
 <body>
-    <h1>Hallo von Kubernetes 👋</h1>
-    <p>Antwort von Container: <strong>{{CONTAINER_ID}}</strong></p>
+<h1>Hallo Kubernetes 👋</h1>
+<p>Antwort von Container: {{CONTAINER_ID}}</p>
 </body>
 </html>
 ```
-Repo-URL merken (z. B. https://github.com/deinname/simple-webpage.git)
 
----------------------------------------------------------------------------------------------
+Repo-URL merken.
 
-# Schritt 4 app/Dockerfile erstellen – Webserver Docker-Image  
+-------------------------------------------------------------------------------------------------------------------------
 
-```
-FROM nginx:alpine
+# Schritt 4 – Zertifikat erzeugen
 
-RUN apk add --no-cache git bash
-
-COPY nginx.conf /etc/nginx/nginx.conf
-
-COPY entrypoint.sh /entrypoint.sh
-
-RUN chmod +x /entrypoint.sh
-
-HEALTHCHECK --interval=10s --timeout=2s \
-  CMD wget -qO- http://127.0.0.1/health || exit 1
-
-ENTRYPOINT ["/entrypoint.sh"]
-
-```
-
-----------------------------------------------------------------------
-
-# app/entrypoint.sh erstellen 
+Im Ordner `haproxy/certs`:
 
 ```bash
-#!/bin/sh
-
-
-set -e
-
-if [ -z "$WEB_REPO_URL" ]; then
-  echo "WEB_REPO_URL nicht gesetzt"
-  exit 1
-fi
-
-rm -rf /usr/share/nginx/html/*
-
-git clone "$WEB_REPO_URL" /usr/share/nginx/html
-if [ ! -f /usr/share/nginx/html/index.html ]; then
-  echo "index.html fehlt im Web-Repository"
-  exit 1
-fi
-
-CONTAINER_ID=$(hostname)
-
-sed -i "s/{{CONTAINER_ID}}/$CONTAINER_ID/g" /usr/share/nginx/html/index.html
-
-nginx -g "daemon off;"
-```
-
----------------------------------------------------------------------------------
-
-# app/nginx.conf erstellen 
-
-```nginx
-events {}
-
-http {
-
-    server {
-        
-
-        listen 80;
-
-        location /health {
-            return 200 "OK";
-        }
-
-        location / {
-            root /usr/share/nginx/html;
-            index index.html;
-        }
-    }
-}
-```
--------------------------------------------------------------------------------------
-
-# Schritt 5 – HAProxy Load-Balancer (HTTPS)
-
-Zertifikat erzeugen
-
 openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365 -nodes
-cat cert.pem key.pem > cert.pem
-
--------------------------------------------------------------------------------------
-#  haproxy/haproxy.cfg erstellen 
-```
-global
-    log stdout format raw local0
-    maxconn 256
-
-defaults
-    log global
-    mode http
-    option httplog
-    timeout connect 5s
-    timeout client 30s
-    timeout server 30s
-
-frontend https_front
-    mode http
-    bind *:8443 ssl crt /usr/local/etc/haproxy/certs/fullchain.pem
-    default_backend web_back
-
-
-backend web_back
-    mode http
-    balance roundrobin
-    option httpchk GET /health
-    server-template web 2 webserver-headless.default.svc.cluster.local:80 check
-```
--------------------------------------------------------------------------------------
-
-# Schritt 6 k8s/web-deployment.yaml  erstellen – Kubernetes Deployment (2 Instanzen)
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: webserver
-spec:
-  replicas: 2                 
-  selector:
-    matchLabels:
-      app: web
-  template:
-    metadata:
-      labels:
-        app: web               
-    spec:
-      containers:
-        - name: web
-          image: webserver:latest
-          imagePullPolicy: Never   
-          env:
-            - name: WEB_REPO_URL
-              value: "https://github.com/FaustoOliveira/minikube-webpage.git"
-              # Git-Repo für Web-Inhalt
-          ports:
-            - containerPort: 80     # HTTP-Port des Webservers
-```
-------------------------------------------------------------------------------------------
-
-# k8s/web-headless-service.yaml 
-
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: webserver-headless
-spec:
-  clusterIP: None        
-  selector:
-    app: web              
-  ports:
-    - port: 80             
-      targetPort: 80      
+cat cert.pem key.pem > fullchain.pem
 ```
 
--------------------------------------------------------------------------------------------
+Zertifikate bleiben lokal.
 
-# haproxy-deployment.yaml
+-------------------------------------------------------------------------------------------------------------------------
 
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: haproxy
-spec:
-  replicas: 1              
-  selector:
-    matchLabels:
-      app: haproxy
-  template:
-    metadata:
-      labels:
-        app: haproxy        
-    spec:
-      containers:
-        - name: haproxy
-          image: haproxy-lb:latest
-          imagePullPolicy: Never  
-          ports:
-            - containerPort: 8443 
-```
-----------------------------------------------------------------------------------------------
-
-# haproxy-service.yaml
-```yaml
-apiVersion: v1
-kind: Service
-metadata:
-  name: haproxy
-spec:
-  type: NodePort          
-  selector:
-    app: haproxy         
-  ports:
-    - name: https
-      port: 443           
-      targetPort: 443    
-      nodePort: 30443    
-```
---------------------------------------------------------------------------------------------
-
-# Schritt 7 – Build & Start
-```bash
-eval $(minikube docker-env)
-docker build -t webserver ./app
-kubectl apply -f k8s/
-```
----------------------------------------------------------------------------------------------
-
-Zugriff:
-
-```bash
-minikube ip
-```
-Browser:
-
-```bash
-https://<MINIKUBE-IP>:30443
-```
-
-------------------------------------------------------------------------------------------
-
-löscht:
-
-```bash
-minikube delete
-``` 
-
--  alle Pods
-    
--  alle Deployments & Services
-    
--  alle Images **im Minikube-Docker**
-    
--  den ganzen Cluster
-    
-
-**Dein Code, YAMLs, Dockerfiles sind noch da**  
-Kubernetes-Zustand ist nur leer
-
---------------------------------------------------------------------------------------------
-
-# Ziel
-
-Am Ende erreichst du wieder:
-
-```bash
-https://<minikube-ip>:30443
-```
----------------------------------------------------------------------------------------------
-
-SCHRITT-FÜR-SCHRITT WIEDERHERSTELLUNG
-
-# 1  Minikube starten
-
-```bash 
-minikube start
-```
-
-Prüfen:
-
-```bash
-kubectl get pods
-```
-```bash
-No resources found (OK!)
-```
-
----------------------------------------------------------------------------------------------
-
-# 2 Docker auf Minikube umstellen (SEHR WICHTIG)
+# Schritt 5 – Docker auf Minikube umstellen
 
 ```bash
 eval $(minikube docker-env)
 ```
 
----------------------------------------------------------------------------------------------
+Sehr wichtig — sonst sieht Kubernetes die Images nicht.
 
-# 3 Images neu bauen
+-------------------------------------------------------------------------------------------------------------------------
 
-Webserver
+# Schritt 6 – Images bauen
+
+Webserver:
 
 ```bash
 docker build -t webserver ./app
 ```
 
-HAProxy
+HAProxy:
 
 ```bash
 docker build -t haproxy-lb ./haproxy
 ```
 
+-------------------------------------------------------------------------------------------------------------------------
 
-Prüfen:
-
-```bash
-docker images | grep -E "webserver|haproxy"
-```
-
----------------------------------------------------------------------------------------------
-
-# 4 Kubernetes-Objekte deployen
-
-Einfach **alles auf einmal**:
+# Schritt 7 – Kubernetes deployen
 
 ```bash
 kubectl apply -f k8s/
 ```
 
-Du solltest sehen:
-```bash
-deployment.apps/webserver created
-deployment.apps/haproxy created
-service/webserver-headless created
-service/haproxy created
-```
------------------------------------------------------------------------------------------------
-
-# 5 Status prüfen
+Status prüfen:
 
 ```bash
 kubectl get pods
 kubectl get svc
 ```
 
-Erwartet:
-```bash
-webserver   1/1 Running (2x)
-haproxy     1/1 Running
+-------------------------------------------------------------------------------------------------------------------------
 
-haproxy   NodePort   443:30443/TCP
-```
-----------------------------------------------------------------------------------------------
-
-# 6 Zugriff im Browser
+# Zugriff
 
 ```bash
 minikube ip
 ```
 
-Dann: 
-```css
+Im Browser:
+
+```bash
 https://<MINIKUBE-IP>:30443
 ```
-Zertifikatswarnung → **Erweitert → Trotzdem fortfahren**
 
------------------------------------------------------------------------------------------------
+Zertifikatswarnung ignorieren (self-signed).
 
-# 7 Funktionstest (optional, aber gut)
+-------------------------------------------------------------------------------------------------------------------------
+
+# Funktionstest
+
+Pod löschen:
 
 ```bash
 kubectl delete pod -l app=web
 ```
+
+Die Webseite bleibt erreichbar → Failover funktioniert.
+
+-------------------------------------------------------------------------------------------------------------------------
+
+# Reset
+
+Cluster löschen:
+
+```bash
+minikube delete
+```
+
+Code bleibt erhalten.
+
+-------------------------------------------------------------------------------------------------------------------------
+
+# Wiederherstellung
+
+```bash
+minikube start
+eval $(minikube docker-env)
+
+docker build -t webserver ./app
+docker build -t haproxy-lb ./haproxy
+
+kubectl apply -f k8s/
+```
+
+-------------------------------------------------------------------------------------------------------------------------
+
+# Sicherheitsaspekte
+
+- Minimal Alpine Base Image
+- Fail-fast Startskript
+- Healthchecks aktiv
+- Keine Secrets im Repository
+- Self-signed Zertifikate lokal
+- Trennung von Load Balancer und Webserver
+
+-------------------------------------------------------------------------------------------------------------------------
+
+# Ziel
+
+Demonstration von:
+
+- Kubernetes Deployments
+- Headless Services
+- Externer Load Balancer
+- HTTPS Termination
+- Health Monitoring
+- Automatischem Failover
+- Git-basiertem Content
+
+-------------------------------------------------------------------------------------------------------------------------
+
+Autor: Fausto Oliveira
 
