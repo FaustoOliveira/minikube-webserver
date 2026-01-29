@@ -1,21 +1,40 @@
+# --------------------------------------------------
+# HAProxy Deployment
+# Startet TLS Load Balancer Pod im Kubernetes Cluster
+# --------------------------------------------------
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: haproxy
+  # Name des Deployments
+
 spec:
-  replicas: 1               # Anzahl der Pods
+  replicas: 1
+  # Anzahl Load Balancer Pods
+
   selector:
     matchLabels:
       app: haproxy
+      # Verknüpft Pods mit diesem Deployment
+
   template:
     metadata:
       labels:
-        app: haproxy        # Label für Selector & Service
+        app: haproxy
+        # Label für Service & Pod-Selektion
+
     spec:
       containers:
         - name: haproxy
           image: haproxy-lb:v7
-          imagePullPolicy: Never   # Nutzt lokales Image
+          # Lokales Docker Image
+
+          imagePullPolicy: Never
+          # Kubernetes zieht kein Image aus Registry
+
           ports:
-            - containerPort: 8443  # HTTPS Port (HAProxy)
+            - containerPort: 8443
+              # HTTPS Port vom Proxy
+
 

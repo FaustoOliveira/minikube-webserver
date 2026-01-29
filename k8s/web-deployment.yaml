@@ -1,60 +1,73 @@
+# --------------------------------------------------
+# Webserver Deployment
+# Startet mehrere NGINX Pods mit Git-basiertem Content
+# --------------------------------------------------
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: webserver
+  # Name des Deployments
 
 spec:
-  replicas: 2 # Anzahl Webserver-Pods (Load Balancing sichtbar)
+  replicas: 2
+  # Anzahl Webserver Pods
 
   selector:
     matchLabels:
       app: web
+      # Verknüpft Pods mit Deployment
 
   template:
     metadata:
       labels:
-        app: web # Label wird vom Headless Service + HAProxy genutzt
+        app: web
+        # Wird vom Headless Service + HAProxy genutzt
 
     spec:
       containers:
         - name: web
           image: webserver:latest
-          imagePullPolicy: Never # Nutzt lokales Minikube Docker Image
+          # Lokales Docker Image
+
+          imagePullPolicy: Never
+          # Kein Pull aus Registry
 
           env:
             - name: WEB_REPO_URL
               value: "https://github.com/FaustoOliveira/minikube-webpage.git"
-              # Repository wird beim Containerstart automatisch geklont
+              # Git Repo für Webseiteninhalt
 
           ports:
-            - containerPort: 80 # HTTP-Port vom nginx Webserver
+            - containerPort: 80
+              # HTTP Port vom Webserver
 
-          # --- Kubernetes Health Checks ---
-          # Kubernetes prüft ob der Container lebt
-          # Bei Fehler wird Pod neu gestartet
+          # --- Health Checks ---
           livenessProbe:
             httpGet:
               path: /health
               port: 80
             initialDelaySeconds: 5
             periodSeconds: 10
+            # Neustart bei Fehler
 
-          # Kubernetes prüft ob Container bereit für Traffic ist
-          # Nur "ready" Pods bekommen Requests vom Load Balancer
           readinessProbe:
             httpGet:
               path: /health
               port: 80
             initialDelaySeconds: 15
             periodSeconds: 5
+            # Pod nur bereit wenn gesund
 
-          # --- Resource Limits ---
-          # Schutz vor CPU / RAM Überlastung
-          # Simuliert Produktionsumgebung
+          # --- Ressourcenlimits ---
           resources:
             limits:
               cpu: "100m"
               memory: "128Mi"
+              # Maximale Nutzung
+
             requests:
               cpu: "50m"
               memory: "64Mi"
+              # Garantierte Mindestressourcen
+

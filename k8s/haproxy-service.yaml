@@ -1,14 +1,31 @@
+# --------------------------------------------------
+# HAProxy Service
+# Exponiert Load Balancer über NodePort
+# --------------------------------------------------
+
 apiVersion: v1
 kind: Service
 metadata:
   name: haproxy
+  # Name des Services
+
 spec:
-  type: NodePort          # Service über Node-IP erreichbar
+  type: NodePort
+  # Service über Node-IP erreichbar
+
   selector:
-    app: haproxy          # Wählt HAProxy-Pods aus
+    app: haproxy
+    # Leitet Traffic an HAProxy Pods
+
   ports:
     - name: https
-      port: 443           # Service-Port (Cluster-intern)
-      targetPort: 8443     # Port im Container
-      nodePort: 30443     # Externer NodePort
+      port: 443
+      # Interner Cluster-Port
+
+      targetPort: 8443
+      # Port im Container
+
+      nodePort: 30443
+      # Externer Zugriffspunkt
+
 

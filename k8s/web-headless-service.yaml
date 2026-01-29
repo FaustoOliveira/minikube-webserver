@@ -1,11 +1,26 @@
+# --------------------------------------------------
+# Headless Service
+# Ermöglicht direkte DNS-Auflösung aller Webserver Pods
+# Wird vom HAProxy Backend genutzt
+# --------------------------------------------------
+
 apiVersion: v1
 kind: Service
 metadata:
   name: webserver-headless
+  # Name des Services
+
 spec:
-  clusterIP: None          # Headless Service (kein Cluster-IP)
+  clusterIP: None
+  # Headless Service → keine virtuelle IP
+
   selector:
-    app: web               # Wählt Webserver-Pods aus
+    app: web
+    # Wählt Webserver Pods aus
+
   ports:
-    - port: 80             # Service-Port
-      targetPort: 80       # Container-Port
+    - port: 80
+      # Service Port
+
+      targetPort: 80
+      # Container Port
