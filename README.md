@@ -1,57 +1,130 @@
 # minikube-webserver
 
-Dieses Projekt demonstriert eine vollständige lokale Kubernetes-Infrastruktur mit:
+Dieses Projekt demonstriert den Aufbau einer lokalen, hochverfügbaren Kubernetes-Infrastruktur, 
+in der klar getrennte Komponenten zusammenarbeiten:
 
-- dynamischem Webserver
-- externem Load Balancer
-- HTTPS
-- Healthchecks
-- Failover
-- Git-basiertem Content
+
+Kubernetes übernimmt die Orchestrierung der Container sowie automatisches Self-Healing bei Ausfällen.
+
+NGINX-Webserver liefern statische Inhalte aus, die dynamisch aus einem Git-Repository geladen werden.
+
+HAProxy dient als TLS-terminierender Load Balancer und verteilt den Traffic per Round-Robin auf mehrere Instanzen.
+
+Health Checks ermöglichen eine kontinuierliche Zustandsüberwachung der Container.
+
+Ein automatisches Failover verhindert Downtime, indem Requests nur an gesunde Pods geleitet werden.
+
+HTTPS-Verschlüsselung schützt die Kommunikation zwischen Client und Plattform.
+
+
+
 
 Das Projekt besteht aus **zwei Repositories**:
 
 1. Infrastruktur-Repo (dieses Projekt)
+
+   → Enthält alle Konfigurationen für Kubernetes, Docker sowie den Load Balancer.
+
 2. Öffentliches HTML-Repo (Webinhalt)
 
-Die Webseite wird beim Containerstart automatisch aus dem Git-Repo geladen.
+   → Beinhaltet den statischen Webseiteninhalt, der beim Start eines Containers automatisch geklont wird.
+
+---
+ Dynamischer Webseiteninhalt
+
+Beim Start führt jeder Webserver folgende Schritte aus:
+
+Klonen des Git-Repositories
+
+Validieren der enthaltenen index.html
+
+Starten des NGINX-Webservers
+
+Dadurch können Änderungen an der Webseite sofort bereitgestellt werden.
+
+---
 
 TLS-Zertifikate werden **lokal erzeugt** und sind **nicht Bestandteil des Git-Repositories**.
 
--------------------------------------------------------------------------------------------------------------------------
+Grund:
+Private Schlüssel sollten niemals versioniert werden, um Sicherheitsrisiken zu vermeiden.
 
-| Technologie  | Begründung                               |
-| ------------ | ---------------------------------------- |
-| **Docker**   | Standard für Container                   |
-| **Minikube** | Lokales Kubernetes für Tests             |
-| **NGINX**    | Leichtgewichtiger Webserver              |
-| **HAProxy**  | Load Balancer mit Healthchecks           |
-| **Git**      | Dynamischer Webseiteninhalt              |
-| **OpenSSL**  | Self-signed HTTPS                        |
-| **Bash**     | Automatisierung                          |
+Diese Trennung ermöglicht es, 
+Webinhalte unabhängig von der Infrastruktur zu aktualisieren ohne ein neues Container-Image bauen zu müssen.
 
 -------------------------------------------------------------------------------------------------------------------------
 
-# Gesamtidee
+| Technologie  | Zweck                                                |
+| ------------ | ---------------------------------------------------- |
+| **Docker**   | Containerisierung der Anwendungen                    |
+| **Minikube** | Lokale Kubernetes-Umgebung für Entwicklung und Tests |
+| **NGINX**    | Schlanker und performanter Webserver                 |
+| **HAProxy**  | Load Balancer mit integrierten Health Checks         |
+| **Git**      | Bereitstellung dynamischer Webseiteninhalte          |
+| **OpenSSL**  | Erstellung selbstsignierter TLS-Zertifikate          |
+| **Bash**     | Automatisierung von Container-Startprozessen         |
+
+
+-------------------------------------------------------------------------------------------------------------------------
+
+# Gesamtidee & Architektur
+
+Die folgende Übersicht zeigt den kompletten Weg einer Anfrage — vom Browser bis zum Webserver:
 
 ```css
 Browser (HTTPS)
    ↓
-NodePort Service (30443)
+NodePort Service (Port 30443)
    ↓
-HAProxy Pod (TLS Termination + LB)
+HAProxy Pod
+(TLS-Terminierung + Load Balancing)
    ↓
-Headless Service (DNS Discovery)
+Headless Service
+(DNS-basierte Pod-Erkennung)
    ↓
-Webserver Pods (Git Content)
+Webserver Pods
+(NGINX + Git-basierter Content)
+
 ```
 
-Minikube: lokales Kubernetes  
-Docker-Image: Webserver + Git Clone Logik  
-ENV Variable: Git-Repo URL  
-Healthchecks: Container + HAProxy  
-Load Balancer: als Kubernetes Pod mit NodePort Service
-HTTPS: self-signed Zertifikat
+Was passiert hier Schritt für Schritt?
+
+1️⃣ Der Browser stellt eine HTTPS-Verbindung zum Kubernetes-Cluster her.
+
+2️⃣ Der NodePort Service macht den internen HAProxy von außen erreichbar (Port 30443).
+
+3️⃣ HAProxy übernimmt zwei Aufgaben:
+
+Entschlüsselung der HTTPS-Verbindung (TLS-Terminierung)
+
+Gleichmäßige Verteilung der Anfragen auf mehrere Webserver (Round-Robin)
+
+4️⃣ Über den Headless Service erhält HAProxy automatisch eine Liste aller aktiven Webserver-Pods via DNS.
+
+5️⃣ Die Webserver Pods liefern die Webseite aus, deren Inhalte beim Start aus einem Git-Repository geladen werden.
+
+
+
+
+Rolle der einzelnen Komponenten
+
+**Minikube**
+Stellt eine lokale Kubernetes-Umgebung für Entwicklung und Tests bereit.
+
+**Docker-Image (Webserver)**
+Enthält NGINX sowie die Logik zum Klonen des Webseiten-Repositories.
+
+**Environment Variable (WEB_REPO_URL)**
+Definiert, aus welchem Git-Repository der Webseiteninhalt geladen wird.
+
+**Health Checks**
+Überwachen kontinuierlich die Erreichbarkeit der Container und steuern das Failover.
+
+**Load Balancer (HAProxy)**
+Läuft als Kubernetes Pod und verteilt den Traffic zuverlässig auf gesunde Webserver.
+
+**HTTPS (Self-Signed Zertifikat)**
+Sichert die Kommunikation zwischen Browser und Plattform.
 
 -------------------------------------------------------------------------------------------------------------------------
 
@@ -59,40 +132,42 @@ HTTPS: self-signed Zertifikat
 
 ```
 minikube-webserver/
-├── app/
-│   ├── Dockerfile
-│   ├── entrypoint.sh
-│   └── nginx.conf
+├── app/                         # Webserver Container
+│   ├── Dockerfile               # Baut den NGINX-Webserver
+│   ├── entrypoint.sh            # Klont Git-Repo & startet NGINX
+│   └── nginx.conf               # NGINX Konfiguration + Health Endpoint
 │
-├── haproxy/
-│   ├── Dockerfile
-│   ├── haproxy.cfg
-│   └── certs/        # lokal erzeugt (nicht im Repo)
+├── haproxy/                     # Load Balancer Container
+│   ├── Dockerfile               # Baut HAProxy Image
+│   ├── haproxy.cfg              # TLS + Loadbalancing + Healthchecks
+│   └── certs/                   # Lokale TLS-Zertifikate (nicht versioniert)
 │
-├── k8s/
-│   ├── web-deployment.yaml
-│   ├── web-headless-service.yaml
-│   ├── haproxy-deployment.yaml
-│   └── haproxy-service.yaml
+├── k8s/                         # Kubernetes Ressourcen
+│   ├── web-deployment.yaml      # Deployment der Webserver Pods
+│   ├── web-headless-service.yaml# DNS-basierte Pod-Erkennung
+│   ├── haproxy-deployment.yaml  # Deployment des Load Balancers
+│   └── haproxy-service.yaml     # NodePort Service (externer Zugriff)
 │
-├── .gitignore
-└── README.md
+├── .gitignore                   # Schließt Zertifikate & lokale Dateien aus
+└── README.md                    # Projekt-Dokumentation & Anleitung
 ```
 
 -------------------------------------------------------------------------------------------------------------------------
 
 # Schritt 1 – Voraussetzungen installieren
 
-Docker  
+Bitte installiere folgende Tools:
+
+- Docker  
 https://docs.docker.com/get-docker/
 
-Minikube  
+- Minikube  
 https://minikube.sigs.k8s.io/docs/start/
 
-kubectl  
+- kubectl  
 https://kubernetes.io/docs/tasks/tools/
 
-Test:
+Installation prüfen:
 
 ```
 docker --version
@@ -100,19 +175,26 @@ minikube version
 kubectl version --client
 ```
 
+Wenn alle Befehle eine Version anzeigen, bist du bereit.
+
 -------------------------------------------------------------------------------------------------------------------------
 
 # Schritt 2 – Minikube starten
 
+Starte nun dein lokales Kubernetes-Cluster:
+
 ```bash
 minikube start --driver=docker
 ```
+Dieser Schritt erstellt eine lokale Kubernetes-Umgebung auf deinem Rechner.
 
 -------------------------------------------------------------------------------------------------------------------------
 
 # Schritt 3 – HTML Repository erstellen
 
-Beispiel:
+Erstelle ein separates öffentliches Git-Repository für den Webseiteninhalt.
+
+Beispiel index.html:
 
 ```
 simple-webpage/
@@ -129,50 +211,59 @@ simple-webpage/
 </html>
 ```
 
-Repo-URL merken.
+Die Platzhalter-Variable {{CONTAINER_ID}} wird beim Start automatisch ersetzt.
+
+Merke dir die Repository-URL, sie wird später verwendet.
 
 -------------------------------------------------------------------------------------------------------------------------
 
 # Schritt 4 – Zertifikat erzeugen
 
-Im Ordner `haproxy/certs`:
+Wechsle in den Ordner ``haproxy/certs`` und erstelle ein Self-Signed Zertifikat:
 
 ```bash
 openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365 -nodes
 cat cert.pem key.pem > fullchain.pem
 ```
 
-Zertifikatswarnung ist normal (self-signed)
+ℹ️ Eine Zertifikatswarnung im Browser ist normal, da es sich um ein selbstsigniertes Zertifikat handelt. (self-signed)
 
 -------------------------------------------------------------------------------------------------------------------------
 
 # Schritt 5 – Docker auf Minikube umstellen
 
+Damit Kubernetes deine lokal gebauten Docker Images nutzen kann, führe aus:
+
 ```bash
 eval $(minikube docker-env)
 ```
 
-Sehr wichtig — sonst sieht Kubernetes die Images nicht.
+Sehr wichtig:
+Dieser Schritt wird häufig vergessen und führt sonst zu ErrImageNeverPull.
 
 -------------------------------------------------------------------------------------------------------------------------
 
 # Schritt 6 – Images bauen
 
-Webserver:
+Webserver Image bauen:
 
 ```bash
 docker build -t webserver ./app
 ```
 
-HAProxy:
+HAProxy Image bauen:
 
 ```bash
 docker build -t haproxy-lb ./haproxy
 ```
 
+Beide Images werden jetzt direkt in der Minikube-Umgebung erstellt.
+
 -------------------------------------------------------------------------------------------------------------------------
 
 # Schritt 7 – Kubernetes deployen
+
+Starte alle Kubernetes-Komponenten:
 
 ```bash
 kubectl apply -f k8s/
@@ -184,10 +275,13 @@ Status prüfen:
 kubectl get pods
 kubectl get svc
 ```
+Warte, bis alle Pods den Status Running haben.
 
 -------------------------------------------------------------------------------------------------------------------------
 
-# Zugriff
+# Schritt 8 – Zugriff auf die Anwendung
+
+Ermittle die IP-Adresse von Minikube:
 
 ```bash
 minikube ip
@@ -199,23 +293,31 @@ Im Browser:
 https://<MINIKUBE-IP>:30443
 ```
 
-Zertifikatswarnung ignorieren (self-signed).
+Die HTTPS-Warnung kannst du ignorieren (Self-Signed Zertifikat).
 
 -------------------------------------------------------------------------------------------------------------------------
 
-# Funktionstest
+# Schritt 9 – Funktion testen (Failover)
 
-Pod löschen:
+Lösche einen Webserver Pod:
 
 ```bash
 kubectl delete pod -l app=web
 ```
 
-Die Webseite bleibt erreichbar → Failover funktioniert.
+Ergebnis:
+
+Kubernetes startet automatisch einen neuen Pod
+
+HAProxy leitet Traffic nur an gesunde Pods
+
+Die Webseite bleibt erreichbar
+
+✅ Failover funktioniert.
 
 -------------------------------------------------------------------------------------------------------------------------
 
-# Reset
+# Schritt 10 – Cluster zurücksetzen (optional)
 
 Cluster löschen:
 
@@ -223,11 +325,11 @@ Cluster löschen:
 minikube delete
 ```
 
-Code bleibt erhalten.
+Der Code bleibt dabei erhalten.
 
 -------------------------------------------------------------------------------------------------------------------------
 
-# Wiederherstellung
+# Wiederherstellung nach Reset
 
 ```bash
 minikube start
@@ -252,13 +354,24 @@ kubectl apply -f k8s/
 
 -------------------------------------------------------------------------------------------------------------------------
 
-# Ziel
+# Sicherheitsaspekte
+
+Dieses Projekt berücksichtigt mehrere grundlegende Sicherheitsmaßnahmen:
+
+- Minimalistische Container-Images reduzieren die Angriffsfläche
+- Fail-fast Startlogik verhindert instabile Containerzustände
+- Health Checks überwachen den Zustand der Anwendungen
+- Keine Secrets oder privaten Schlüssel im Repository
+- TLS-Zertifikate werden ausschließlich lokal erzeugt
+- Klare Trennung zwischen Webserver und Load Balancer
+
+---
 
 Dieses Projekt demonstriert:
 
 - Kubernetes zur Verwaltung mehrerer Webserver
-- Ingress-ähnlicher Load Balancer Pod
-- HTTPS Absicherung
+- Einen externen Load-Balancer als Pod
+- HTTPS-Absicherung
 - Healthchecks zur Stabilitätsüberwachung
 - Automatisches Failover bei Container-Ausfall
 - Dynamische Inhalte aus einem Git-Repository
