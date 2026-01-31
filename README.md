@@ -19,7 +19,7 @@ HTTPS-Verschlüsselung schützt die Kommunikation zwischen Client und Plattform.
 
 
 
-Das Projekt besteht aus **zwei Repositories**:
+# Das Projekt besteht aus **zwei Repositories**:
 
 1. Infrastruktur-Repo (dieses Projekt)
 
@@ -30,15 +30,15 @@ Das Projekt besteht aus **zwei Repositories**:
    → Beinhaltet den statischen Webseiteninhalt, der beim Start eines Containers automatisch geklont wird.
 
 ---
- Dynamischer Webseiteninhalt
+**Dynamischer Webseiteninhalt**
 
 Beim Start führt jeder Webserver folgende Schritte aus:
 
-Klonen des Git-Repositories
+- Klonen des Git-Repositories
 
-Validieren der enthaltenen index.html
+- Validieren der enthaltenen index.html
 
-Starten des NGINX-Webservers
+- Starten des NGINX-Webservers
 
 Dadurch können Änderungen an der Webseite sofort bereitgestellt werden.
 
