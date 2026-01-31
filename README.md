@@ -89,19 +89,19 @@ Webserver Pods
 
 Was passiert hier Schritt für Schritt?
 
-1️⃣ Der Browser stellt eine HTTPS-Verbindung zum Kubernetes-Cluster her.
+1. Der Browser stellt eine HTTPS-Verbindung zum Kubernetes-Cluster her.
 
-2️⃣ Der NodePort Service macht den internen HAProxy von außen erreichbar (Port 30443).
+2. Der NodePort Service macht den internen HAProxy von außen erreichbar (Port 30443).
 
-3️⃣ HAProxy übernimmt zwei Aufgaben:
+3. HAProxy übernimmt zwei Aufgaben:
 
 Entschlüsselung der HTTPS-Verbindung (TLS-Terminierung)
 
 Gleichmäßige Verteilung der Anfragen auf mehrere Webserver (Round-Robin)
 
-4️⃣ Über den Headless Service erhält HAProxy automatisch eine Liste aller aktiven Webserver-Pods via DNS.
+4. Über den Headless Service erhält HAProxy automatisch eine Liste aller aktiven Webserver-Pods via DNS.
 
-5️⃣ Die Webserver Pods liefern die Webseite aus, deren Inhalte beim Start aus einem Git-Repository geladen werden.
+5. Die Webserver Pods liefern die Webseite aus, deren Inhalte beim Start aus einem Git-Repository geladen werden.
 
 
 
@@ -205,7 +205,7 @@ simple-webpage/
 <!DOCTYPE html>
 <html>
 <body>
-<h1>Hallo Kubernetes 👋</h1>
+<h1>Hallo Kubernetes </h1>
 <p>Antwort von Container: {{CONTAINER_ID}}</p>
 </body>
 </html>
@@ -226,7 +226,7 @@ openssl req -x509 -newkey rsa:2048 -keyout key.pem -out cert.pem -days 365 -node
 cat cert.pem key.pem > fullchain.pem
 ```
 
-ℹ️ Eine Zertifikatswarnung im Browser ist normal, da es sich um ein selbstsigniertes Zertifikat handelt. (self-signed)
+ **Eine Zertifikatswarnung im Browser ist normal, da es sich um ein selbstsigniertes Zertifikat handelt. (self-signed)**
 
 -------------------------------------------------------------------------------------------------------------------------
 
@@ -313,7 +313,7 @@ HAProxy leitet Traffic nur an gesunde Pods
 
 Die Webseite bleibt erreichbar
 
-✅ Failover funktioniert.
+Failover funktioniert.
 
 -------------------------------------------------------------------------------------------------------------------------
 
