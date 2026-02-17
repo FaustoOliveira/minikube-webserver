@@ -10,7 +10,7 @@ metadata:
   # Name des Deployments
 
 spec:
-  replicas: 2
+  replicas: 5
   # Anzahl Webserver Pods
 
   selector:
